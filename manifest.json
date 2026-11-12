@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Reel Glow",
   "version": "1.1.0",
-  "description": "Fills the black side bars of Instagram Reels and YouTube Shorts with a live glow that matches the video's colors.",
+  "description": "colors glow effect",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",
@@ -10,7 +10,7 @@
     "128": "icons/icon128.png"
   },
   "action": {
-    "default_title": "Reel Glow: video ke colors ka glow Reels/Shorts ke side me",
+    "default_title": "shorts Glow",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png"
