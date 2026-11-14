@@ -1,11 +1,6 @@
 (() => {
   const CFG = {
-    opacity: 0.95,   
-    blur: 18,      
-    saturate: 1.8,  
-    brightness: 1.1,
-    fps: 20,        
-    minScale: 1.5    
+     
   };
 
   const isIG = location.hostname.includes('instagram.com');
