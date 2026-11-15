@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Reel Glow",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Fills the black side bars of Instagram Reels and YouTube Shorts with a live glow that matches the video's colors. Click the icon to customize.",
   "permissions": ["storage"],
   "icons": {

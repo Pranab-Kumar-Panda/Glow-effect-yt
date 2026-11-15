@@ -1,6 +1,13 @@
 const DEFAULTS = {
-    enabled: true, instagram: true, youtube: true,
-    size: 0.35, opacity: 0.6, brightness: 0.5, saturate: 1.3, softness: 3, fps: 12
+    enabled: true, 
+    instagram: true, 
+    youtube: true,
+    size: 0.35, 
+    opacity: 0.6, 
+    brightness: 0.5, 
+    saturate: 1.3, 
+    softness: 5, 
+    fps: 12
 };
 const TOGGLES = ['enabled', 'instagram', 'youtube'];
 const SLIDERS = ['size', 'opacity', 'brightness', 'saturate', 'softness', 'fps'];

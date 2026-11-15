@@ -5,7 +5,7 @@
     opacity: 0.6,     
     brightness: 0.5,  
     saturate: 1.3,    
-    softness: 3,      
+    softness: 5,      
     fps: 12           
   };
 
@@ -114,7 +114,7 @@
 
       right.box.style.left = r.right + 'px';
       right.box.style.width = Math.max(0, W - r.right) + 'px';
-      Object.assign(right.cv.style, sizeStyle, { left: '0px' });
+      Object.assign(right.cv.style, sizeStyle, {  left: (r.left - r.right) + 'px'  });
       Object.assign(right.gr.style, { left: '0px', width: e + 'px' });
 
       const h = Math.max(8, Math.round(SRC_W * r.height / r.width));
