@@ -1,18 +1,22 @@
 (() => {
   const CFG = {
-    opacity: 0.75,
-    saturate: 1.4,
-    brightness: 0.7,
-    fps: 12,
-    scale: 2.0
+    enabled: true, instagram: true, youtube: true,
+    size: 0.35,        
+    opacity: 0.6,     
+    brightness: 0.5,  
+    saturate: 1.3,    
+    softness: 3,      
+    fps: 12           
   };
 
   const isIG = location.hostname.includes('instagram.com');
   const isYT = location.hostname.includes('youtube.com');
 
   const active = () =>
-    (isIG && /^\/(reels?)\//.test(location.pathname)) ||
-    (isYT && location.pathname.startsWith('/shorts'));
+    CFG.enabled && (
+      (isIG && CFG.instagram && /^\/(reels?)\//.test(location.pathname)) ||
+      (isYT && CFG.youtube && location.pathname.startsWith('/shorts'))
+    );
 
   const SRC_W = 32;
   const src = document.createElement('canvas');
@@ -20,8 +24,23 @@
   let wrap, left, right, video = null;
   let lastPick = 0, lastDraw = 0, lastT = -1, geo = '', sh = 0;
 
+  function applySettings(s) {
+    Object.assign(CFG, s);
+    geo = ''; sh = 0; lastT = -1;
+  }
+  try {
+    chrome.storage.local.get(CFG, applySettings);
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area !== 'local') return;
+      const s = {};
+      for (const k in changes) s[k] = changes[k].newValue;
+      applySettings(s);
+    });
+  } catch (e) {}
+
   const fade = dir =>
-    `linear-gradient(to ${dir}, transparent 0%, rgba(0,0,0,.5) 40%, #000 100%)`;
+    `linear-gradient(to ${dir}, transparent 0%, rgba(0,0,0,.15) 15%, ` +
+    `rgba(0,0,0,.4) 35%, rgba(0,0,0,.7) 60%, rgba(0,0,0,.92) 82%, #000 100%)`;
 
   function panel(dir) {
     const box = document.createElement('div');
@@ -81,8 +100,8 @@
 
     if (g !== geo) {
       geo = g;
-      const k = CFG.scale;
-      const e = r.width * (k - 1) / 2;   // glow video ke bahar kitna jayega
+      const e = r.width * CFG.size;
+      const k = 1 + (2 * e) / r.width;
       const sizeStyle = {
         top: r.top + 'px', width: r.width + 'px', height: r.height + 'px',
         transform: `scale(${k})`
@@ -102,7 +121,7 @@
       if (h !== sh) {
         sh = h;
         for (const c of [src, left.cv, right.cv]) { c.width = SRC_W; c.height = h; }
-        sctx.filter = `blur(1px) saturate(${CFG.saturate}) brightness(${CFG.brightness})`;
+        sctx.filter = `blur(${CFG.softness}px) saturate(${CFG.saturate}) brightness(${CFG.brightness})`;
       }
     }
     wrap.style.opacity = String(CFG.opacity);
