@@ -6,7 +6,7 @@ A small Chrome extension that fills the black side bars of **Instagram Reels** a
 
 When you watch Reels or Shorts on a PC, the video is a thin vertical strip in the middle of a wide screen, and the rest is just empty black space.
 
-Reel Glow fills that space with a soft, blurred glow taken from the video itself. The colors change as the video changes, and the glow starts exactly at the edge of the video, so there is no gap or bezel between them.
+Reel Glow fills that space with a soft glow taken from the video itself. The colors change as the video changes, the glow starts exactly at the edge of the video with no gap or bezel, and it fades smoothly to black as it moves away.
 
 - Works only on Instagram Reels and YouTube Shorts
 - Normal YouTube videos, home page and search are not touched
@@ -32,7 +32,7 @@ Keep the `reel-glow` folder where it is. If you delete or move it, the extension
 
 Watching Reels and Shorts on a big monitor feels wasteful. About two thirds of the screen is plain black, and that makes the video feel small and boring.
 
-I wanted something that looks like the ambient lighting on a TV: the video stays sharp in the middle and its colors spill into the empty space around it. I could not find one that only touched Reels and Shorts and sat flush against the video edge, so I built it.
+I wanted something that looks like the ambient lighting on a TV: the video stays sharp in the middle and its colors spill softly into the empty space around it. I could not find one that only touched Reels and Shorts and sat flush against the video edge, so I built it.
 
 ## What can you expect from me?
 
@@ -48,20 +48,56 @@ If something looks wrong or you have an idea, open an issue and I will take a lo
 
 Edit the `CFG` object at the top of `content.js`, reload the extension, then press F5.
 
-| Option       | Default | What it does                              |
-|--------------|---------|-------------------------------------------|
-| `opacity`    | `0.95`  | Glow strength (0 to 1)                    |
-| `blur`       | `18`    | Softness of the glow, in px               |
-| `saturate`   | `1.8`   | How vivid the colors are                  |
-| `brightness` | `1.1`   | Glow brightness                           |
-| `fps`        | `20`    | How often the glow updates                |
-| `minScale`   | `1.5`   | How far the glow spreads past the video   |
+| Option       | Default | What it does                                   |
+|--------------|---------|------------------------------------------------|
+| `opacity`    | `0.75`  | Glow strength (0 to 1)                         |
+| `saturate`   | `1.4`   | How vivid the colors are                       |
+| `brightness` | `0.7`   | Glow brightness (lower = darker, more subtle)  |
+| `fps`        | `12`    | Glow updates per second (lower = lighter)      |
+| `scale`      | `2.0`   | Glow size (1.5 = small, 2.5 = large)           |
 
 To use it on YouTube Shorts only, change this line in `manifest.json`:
 
 ```json
 "matches": ["https://www.youtube.com/*"],
 ```
+
+## Version history
+
+### v1.1.2 (current)
+- Glow is now **smaller** and no longer fills the whole width of the screen. Its size is controlled by the new `scale` setting.
+- Glow is **darker and less bright**, so it looks like a background and not a copy of the video (`brightness` 0.7, `opacity` 0.75).
+- Glow now **fades to black** as it moves away from the video. Before, it turned whitish far from the video.
+- Settings changed: `minScale` was renamed to `scale`, and the `blur` setting was removed.
+
+### v1.1.1
+- Fixed the **laptop slowdown** and the **blurry Shorts** caused by a heavy glow effect.
+- Removed the big CSS blur filter. The glow now comes from a tiny 32px canvas that the browser smooths by itself.
+- The glow is now two small side panels (left and right) and never sits on top of the video.
+- Styles are updated only when the video size or position changes, not on every frame.
+- Default `fps` lowered from 20 to 12, and nothing is redrawn while the video is paused.
+
+### v1.1.0
+- Added the extension **icon** (16, 32, 48 and 128 px) and a **description**.
+- The icon now shows in the Chrome toolbar with a tooltip.
+- Added the `README.md`.
+
+### v1.0.0
+- First version.
+- Live glow around Instagram Reels and YouTube Shorts, taken from the real pixels of the video.
+- The glow is cut out around the video so it touches the video edge with no gap or bezel.
+- Runs only on Reels and Shorts, not on normal YouTube pages.
+
+## Coming in the next version
+
+These are planned and may change:
+
+- A toolbar popup with an **on/off switch**
+- **Sliders** for glow size, brightness and strength, so you do not need to edit `content.js`
+- Choose where it works: Instagram, YouTube Shorts, or both
+- Better support for light theme
+
+Have an idea? Open an issue.
 
 ## Notes
 

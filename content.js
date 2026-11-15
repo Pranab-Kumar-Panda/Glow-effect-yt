@@ -1,11 +1,10 @@
 (() => {
   const CFG = {
-    opacity: 0.95,   
-    blur: 18,      
-    saturate: 1.8,  
-    brightness: 1.1,
-    fps: 20,        
-    minScale: 1.5    
+    opacity: 0.75,
+    saturate: 1.4,
+    brightness: 0.7,
+    fps: 12,
+    scale: 2.0
   };
 
   const isIG = location.hostname.includes('instagram.com');
@@ -15,25 +14,43 @@
     (isIG && /^\/(reels?)\//.test(location.pathname)) ||
     (isYT && location.pathname.startsWith('/shorts'));
 
-  let wrap, inner, ctx, lastDraw = 0, cw = 0, ch = 0;
+  const SRC_W = 32;
+  const src = document.createElement('canvas');
+  const sctx = src.getContext('2d');
+  let wrap, left, right, video = null;
+  let lastPick = 0, lastDraw = 0, lastT = -1, geo = '', sh = 0;
+
+  const fade = dir =>
+    `linear-gradient(to ${dir}, transparent 0%, rgba(0,0,0,.5) 40%, #000 100%)`;
+
+  function panel(dir) {
+    const box = document.createElement('div');
+    Object.assign(box.style, {
+      position: 'absolute', top: '0', height: '100%', overflow: 'hidden'
+    });
+    const cv = document.createElement('canvas');
+    Object.assign(cv.style, { position: 'absolute', transformOrigin: 'center center' });
+    const gr = document.createElement('div');
+    Object.assign(gr.style, {
+      position: 'absolute', top: '0', height: '100%', background: fade(dir)
+    });
+    box.append(cv, gr);
+    wrap.appendChild(box);
+    return { box, cv, gr, ctx: cv.getContext('2d') };
+  }
 
   function build() {
     wrap = document.createElement('div');
     Object.assign(wrap.style, {
-      position: 'fixed', inset: '0', overflow: 'hidden',
-      pointerEvents: 'none', zIndex: '2147483000',
-      mixBlendMode: 'screen',           
+      position: 'fixed', inset: '0', pointerEvents: 'none',
+      zIndex: '2147483000', mixBlendMode: 'screen',
       opacity: '0', transition: 'opacity .4s'
     });
-    inner = document.createElement('canvas');
-    Object.assign(inner.style, {
-      position: 'absolute', transformOrigin: 'center center',
-      filter: `blur(${CFG.blur}px) saturate(${CFG.saturate}) brightness(${CFG.brightness})`
-    });
-    ctx = inner.getContext('2d');
-    wrap.appendChild(inner);
+    left = panel('left');
+    right = panel('right');
     document.documentElement.appendChild(wrap);
   }
+
   function pickVideo() {
     const vh = innerHeight, vw = innerWidth;
     let best = null, bestArea = 0;
@@ -50,32 +67,54 @@
 
   function frame(ts) {
     requestAnimationFrame(frame);
+    if (!active()) { if (wrap) wrap.style.opacity = '0'; return; }
     if (!wrap) build();
 
-    const v = active() ? pickVideo() : null;
-    if (!v) { wrap.style.opacity = '0'; return; }
+    if (!video || !video.isConnected || ts - lastPick > 150) {
+      video = pickVideo(); lastPick = ts;
+    }
+    if (!video) { wrap.style.opacity = '0'; return; }
 
-    const r = v.getBoundingClientRect();
-    const W = innerWidth, H = innerHeight;
+    const r = video.getBoundingClientRect();
+    const W = innerWidth;
+    const g = [r.left, r.top, r.width, r.height, W].map(Math.round).join(',');
 
-    const w = 64, h = Math.max(8, Math.round(64 * r.height / r.width));
-    if (w !== cw || h !== ch) { inner.width = cw = w; inner.height = ch = h; }
+    if (g !== geo) {
+      geo = g;
+      const k = CFG.scale;
+      const e = r.width * (k - 1) / 2;   // glow video ke bahar kitna jayega
+      const sizeStyle = {
+        top: r.top + 'px', width: r.width + 'px', height: r.height + 'px',
+        transform: `scale(${k})`
+      };
 
-    const k = Math.max(CFG.minScale, (W / r.width) * 1.05);
-    Object.assign(inner.style, {
-      left: r.left + 'px', top: r.top + 'px',
-      width: r.width + 'px', height: r.height + 'px',
-      transform: `scale(${k})`
-    });
+      left.box.style.left = '0px';
+      left.box.style.width = Math.max(0, r.left) + 'px';
+      Object.assign(left.cv.style, sizeStyle, { left: r.left + 'px' });
+      Object.assign(left.gr.style, { left: (r.left - e) + 'px', width: e + 'px' });
 
-    const x1 = r.left, y1 = r.top, x2 = r.right, y2 = r.bottom;
-    wrap.style.clipPath =
-      `path(evenodd,'M0 0H${W}V${H}H0Z M${x1} ${y1}H${x2}V${y2}H${x1}Z')`;
+      right.box.style.left = r.right + 'px';
+      right.box.style.width = Math.max(0, W - r.right) + 'px';
+      Object.assign(right.cv.style, sizeStyle, { left: '0px' });
+      Object.assign(right.gr.style, { left: '0px', width: e + 'px' });
+
+      const h = Math.max(8, Math.round(SRC_W * r.height / r.width));
+      if (h !== sh) {
+        sh = h;
+        for (const c of [src, left.cv, right.cv]) { c.width = SRC_W; c.height = h; }
+        sctx.filter = `blur(1px) saturate(${CFG.saturate}) brightness(${CFG.brightness})`;
+      }
+    }
     wrap.style.opacity = String(CFG.opacity);
 
-    if (ts - lastDraw > 1000 / CFG.fps && v.readyState >= 2) {
-      lastDraw = ts;
-      try { ctx.drawImage(v, 0, 0, cw, ch); } catch (e) {}
+    if (ts - lastDraw > 1000 / CFG.fps && video.readyState >= 2 &&
+        video.currentTime !== lastT && sh) {
+      lastDraw = ts; lastT = video.currentTime;
+      try {
+        sctx.drawImage(video, 0, 0, SRC_W, sh);
+        left.ctx.drawImage(src, 0, 0);
+        right.ctx.drawImage(src, 0, 0);
+      } catch (e) {}
     }
   }
   requestAnimationFrame(frame);
